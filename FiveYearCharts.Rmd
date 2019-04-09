@@ -1,0 +1,241 @@
+---
+title: "Five Year Edamame Analysis"
+author: Beth M. Duckles, Ph.D. Insightful, LLC 
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Five Year Demographic Data 
+
+```{r data_in, include=FALSE}
+source("AnalysisFiveYear/DataReadin_FY.R")
+```
+
+### Academic Status 
+
+```{r AcadStatus, echo=FALSE, message=FALSE}
+
+m <- ggplot2::ggplot(data=subset(FYDat,!is.na(AcadStatus)),
+            aes(x = AcadStatus))
+
+m + geom_dotplot(dotsize = .7, binwidth = .09, stackratio = 1.1, show.legend = NA) + 
+  coord_flip() + 
+  labs(x = "Academic Status", y = element_blank()) +
+  ggtitle("Academic Status of EDAMAME Attendees 2014-2018") + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x=element_blank(), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) +
+  facet_grid(. ~ Year)
+
+```
+
+### Academic Status Table 
+```{r AcadSt_PctTable, echo=FALSE, message=FALSE}
+# Chart of counts 
+t <- FYDat %>% 
+  count(AcadStatus, Year) %>% 
+  spread(key = Year, value = n) %>% 
+  filter(AcadStatus != (is.na(AcadStatus)))
+
+#Change to names so that i can call the years since they're numbers otherwise
+names(t) <- c("Ac_Status", "Y2014", "Y2015", "Y2016", "Y2017", "Y2018")
+
+#Arrange in descending order
+t <- t %>%   
+  arrange(desc(Y2018))
+
+#Change NA's to Zero
+t[is.na(t)] <- 0
+  
+# Chart to Percent and rounding. 
+u <- t %>% 
+  transmute(Ac_Status, 
+    Y2014_pct = Y2014/sum(Y2014)*100, 
+    Y2015_pct = Y2015/sum(Y2015)*100,
+    Y2016_pct = Y2016/sum(Y2016)*100,
+    Y2017_pct = Y2017/sum(Y2017)*100,
+    Y2018_pct = Y2018/sum(Y2018)*100)
+u <- u %>% 
+  mutate(
+    Y2014_pct = round(Y2014_pct, digits = 1), 
+    Y2015_pct = round(Y2015_pct, digits = 1),
+    Y2016_pct = round(Y2016_pct, digits = 1),
+    Y2017_pct = round(Y2017_pct, digits = 1),
+    Y2018_pct = round(Y2018_pct, digits = 1))
+
+#Rename for the final Table
+names(u) <- c("Academic Status", "2014", "2015", "2016", "2017", "2018")
+
+#Make Table 
+kable(u) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", full_width = F)) %>% 
+  kableExtra::add_header_above(c(" ", "Percent" = 5))
+```
+
+There were `r nrow(FYDat)` total respondents to the survey across five years. Yearly totals are as follows: 2014 had `r nrow(d14)`, in 2015 there were `r nrow(d15)` respondents, 2016, there were `r nrow(d16)` respondents, in 2017 there were `r nrow(d17)` respondents and in 2018, there were `r nrow(d18)`. 
+
+### Age 
+```{r age, echo=FALSE, message=FALSE}
+q <- ggplot(data = subset(FYDat, !is.na(Age)), 
+            aes(x = Age)) 
+
+q + geom_dotplot(dotsize = .8, show.legend = NA, na.rm = TRUE) + 
+  scale_y_continuous(NULL, breaks = NULL) +
+  coord_fixed(ratio = 10) +
+  ggtitle("Distribution of EDAMAME Attendee Age 2014-2018") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  facet_grid(Year ~ .)
+``` 
+
+### Age Mean/SD 
+```{r Age_DescriptTable, echo=FALSE, message=FALSE}
+# Chart of median/Avg and sd  
+j <- FYDat %>% 
+  select(Age, Year) %>%
+  na.omit %>% 
+  group_by(Year) %>% 
+  summarise(
+    median = median(Age), 
+    average = mean(Age), 
+    st_dev = sd(Age))
+
+j <- j %>% 
+  mutate(
+    average = round(average, digits = 1), 
+    st_dev = round(st_dev, digits = 1))
+
+names(j) <- c("Year", "Median", "Average", "St. Dev")
+#Make Table 
+kable(j) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", full_width = F)) 
+```
+
+### Ethnicity 
+```{r ethnicity, echo=FALSE, message=FALSE}
+
+n <- ggplot(data = subset(FYDat, !is.na(Ethnicity)), 
+            aes(x = Ethnicity))
+
+n + geom_dotplot(dotsize = .6, binwidth = .09, stackratio = 1.1, show.legend = NA) + 
+  coord_flip() + 
+  labs(x = "Ethnicity", y = element_blank()) +
+  ggtitle("Ethnicity of EDAMAME Attendees 2014-2018") + 
+  theme(plot.title = element_text(hjust = 0.4), 
+        axis.text.x=element_blank(), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) +
+  facet_grid(. ~ Year)
+
+```
+
+### Ethnicity Percentage Table 
+```{r Ethnicity_PctTable, echo=FALSE, message=FALSE}
+# Chart of counts 
+v <- FYDat %>% 
+  count(Ethnicity, Year) %>% 
+  spread(key = Year, value = n) %>% 
+  filter(Ethnicity != (is.na(Ethnicity)))
+
+#Change to names so that i can call the years since they're numbers otherwise
+names(v) <- c("Ethn", "Y2014", "Y2015", "Y2016", "Y2017", "Y2018")
+
+#Arrange in descending order
+v <- v %>%   
+  arrange(desc(Y2018))
+
+#Change NA's to Zero
+v[is.na(v)] <- 0
+  
+# Chart to Percent 
+w <- v %>% 
+  transmute(Ethn, 
+    Y2014_pct = Y2014/sum(Y2014)*100, 
+    Y2015_pct = Y2015/sum(Y2015)*100,
+    Y2016_pct = Y2016/sum(Y2016)*100,
+    Y2017_pct = Y2017/sum(Y2017)*100,
+    Y2018_pct = Y2018/sum(Y2018)*100)
+w <- w %>% 
+  mutate(
+    Y2014_pct = round(Y2014_pct, digits = 1), 
+    Y2015_pct = round(Y2015_pct, digits = 1),
+    Y2016_pct = round(Y2016_pct, digits = 1),
+    Y2017_pct = round(Y2017_pct, digits = 1),
+    Y2018_pct = round(Y2018_pct, digits = 1))
+
+#Rename for the final Table
+names(w) <- c("Ethnicity", "2014", "2015", "2016", "2017", "2018")
+
+#Make Table 
+kable(w) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", full_width = F)) %>% 
+  kableExtra::add_header_above(c(" ", "Percent" = 5))
+```
+
+
+### Gender 
+```{r gender, echo=FALSE, message=FALSE}
+
+r <- ggplot(data = subset(FYDat, !is.na(Gender)), 
+            aes(x = Gender))
+
+r + geom_dotplot(binwidth = .28, show.legend = NA) + 
+  coord_fixed(ratio = 15) +
+  coord_flip() + 
+  labs(x = "Gender", y = element_blank()) +
+  ggtitle("Gender of EDAMAME Attendees 2014-2018") + 
+  theme(plot.title = element_text(hjust = 0.4), 
+        axis.text.x=element_blank(), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) +
+  facet_grid (Year ~ .)
+
+```
+
+### Gender Percentage Table 
+```{r Gender_PctTable, echo=FALSE, message=FALSE}
+# Chart of counts 
+g <- FYDat %>% 
+  count(Gender, Year) %>% 
+  spread(key = Year, value = n) %>% 
+  filter(Gender != (is.na(Gender)))
+
+#Change to names so that i can call the years since they're numbers otherwise
+names(g) <- c("Gender", "Y2014", "Y2015", "Y2016", "Y2017", "Y2018")
+
+#Arrange in descending order
+g <- g %>%   
+  arrange(desc(Y2018))
+
+#Change NA's to Zero
+g[is.na(g)] <- 0
+  
+# Chart to Percent 
+h <- g %>% 
+  transmute(Gender, 
+    Y2014_pct = Y2014/sum(Y2014)*100, 
+    Y2015_pct = Y2015/sum(Y2015)*100,
+    Y2016_pct = Y2016/sum(Y2016)*100,
+    Y2017_pct = Y2017/sum(Y2017)*100,
+    Y2018_pct = Y2018/sum(Y2018)*100)
+h <- h %>% 
+  mutate(
+    Y2014_pct = round(Y2014_pct, digits = 1), 
+    Y2015_pct = round(Y2015_pct, digits = 1),
+    Y2016_pct = round(Y2016_pct, digits = 1),
+    Y2017_pct = round(Y2017_pct, digits = 1),
+    Y2018_pct = round(Y2018_pct, digits = 1))
+
+#Rename for the final Table
+names(h) <- c("Gender", "2014", "2015", "2016", "2017", "2018")
+
+#Make Table 
+kable(h) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", full_width = F)) %>% 
+  kableExtra::add_header_above(c(" ", "Percent" = 5))
+```
